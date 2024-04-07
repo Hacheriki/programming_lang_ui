@@ -14,6 +14,11 @@ const srcRef = ref<HTMLTextAreaElement>()
 let highlightInner = ref<string>("")
 let textareaScroll: number = 0
 
+// TODO: SPLIT FILES
+// TODO: ADD OUTPUT
+// TODO: ADD EBNF
+// TODO: ADD MORE ERROR CHECKS
+
 function highlightText() {
   if (!srcRef.value) return
 
@@ -79,7 +84,7 @@ onMounted(() => {
       <div class="backdrop" ref="backdropRef">
         <div class="highlights" ref="highlightRef" v-html="highlightInner"></div>
       </div>
-      <textarea @input="clearMarks" @scroll="updateScroll" ref="srcRef">Программа
+      <textarea @input="clearMarks" @scroll="updateScroll" ref="srcRef" autocomplete="off" autocapitalize="off" spellcheck="false">Программа
 Выполнить:123.321 Первое
 Сохранить:123.1 Второе
 
@@ -139,6 +144,6 @@ textarea {
 mark {
   border-radius: 3px;
   color: transparent;
-  background-color: #b1d5e5;
+  background-color: rgba(255, 89, 89, 0.74);
 }
 </style>
