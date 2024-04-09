@@ -1,22 +1,23 @@
 import {type Token, TokenType} from '../types/tokens'
-import {
-    type BinaryExpression,
-    type Expression,
-    type FloatLiteral,
-    type FunctionExpression,
-    type Identifier,
-    type IntegerLiteral,
-    type Operation,
-    type Program,
-    type Sets,
-    type SetSingle,
-    type UnaryExpression
+import type {
+    BinaryExpression,
+    Expression,
+    FloatLiteral,
+    FunctionExpression,
+    Identifier,
+    IntegerLiteral,
+    Operation,
+    Program,
+    Sets,
+    SetSingle,
+    Statement,
+    UnaryExpression
 } from '../types/astNodes.js'
 import {LangCompileError} from "../types/languageError";
 
 export class Parser {
     tokens: Token[] = []
-    lastConsumedToken: Token | null = null
+    lastConsumedToken: Token | undefined
 
     constructor(tokens: Token[]) {
         this.tokens = tokens
@@ -32,21 +33,39 @@ export class Parser {
     }
 
     typeMatches(where: number, ...tokenTypes: TokenType[]): boolean {
-        const currentToken = this.peek(where)
+        let currentToken = this.peek(where)
         if (!currentToken || !tokenTypes.includes(currentToken.type)) {
             return false
         }
         return true
     }
 
+    typeMatchesStatement(where: number, ...tokenTypes: TokenType[]) {
+        this.skipNewLines()
+        return this.typeMatches(where, ...tokenTypes)
+    }
+
     expect(err: string, ...tokenTypes: TokenType[]): Token {
         const currentToken = this.consume()
         if (!currentToken || !tokenTypes.includes(currentToken.type)) {
-            console.log(this.tokens, currentToken)
+            console.log(this.tokens)
             throw new LangCompileError(err, currentToken)
         }
 
         return currentToken
+    }
+
+    expectNewStatement(err: string) {
+        this.skipNewLines()
+        if (this.lastConsumedToken != undefined && this.lastConsumedToken.type != TokenType.NewLine) {
+            throw new LangCompileError(err, this.peek())
+        }
+    }
+
+    skipNewLines() {
+        while (this.peek().type === TokenType.NewLine) {
+            this.consume()
+        }
     }
 
     parse(): Program {
@@ -58,13 +77,16 @@ export class Parser {
         this.expect("Программа должна начинаться со слова 'Программа'", TokenType.Start)
         program.body.push(this.parseSets())
         do {
+            this.expectNewStatement("Перед началом нового оператора должна идти новая строка")
             program.body.push(this.parseOperator())
-        } while (this.typeMatches(1, TokenType.Equals))
+        } while (this.typeMatchesStatement(1, TokenType.Equals))
+        this.expectNewStatement("Конец программы должен быть на новой строке")
         this.expect("Программа должна заканчиваться словом 'Конец'", TokenType.End)
         this.expect("После слова 'Конец' не может быть символов", TokenType.EOF)
 
         return program
     }
+
 
     parseSets(): Sets {
         const sets: Sets = {
@@ -72,8 +94,9 @@ export class Parser {
             body: []
         }
         do {
+            this.expectNewStatement("Перед началом нового множества должна идти новая строка")
             sets.body.push(this.parseSet())
-        } while (this.typeMatches(0, TokenType.Execute, TokenType.Save))
+        } while (this.typeMatchesStatement(0, TokenType.Execute, TokenType.Save))
 
         return sets
     }
@@ -100,7 +123,13 @@ export class Parser {
         let numAsString: string = ""
         numAsString += this.expect("Вещественное число должно начинаться с целого числа", TokenType.Integer).value
         numAsString += this.expect("Вещественное число долно иметь '.' (точку) как разделитель", TokenType.Dot).value
+        if (this.lastConsumedToken?.isSpaceBefore) {
+            throw new LangCompileError("Между точкой и целым не может быть пробела в вещественных числах", this.lastConsumedToken!)
+        }
         numAsString += this.expect("Вещественное число долно заканчиваться целым числом", TokenType.Integer).value
+        if (this.lastConsumedToken?.isSpaceBefore) {
+            throw new LangCompileError("Между точкой и целым не может быть пробела в вещественных числах", this.lastConsumedToken!)
+        }
         return {
             kind: "FloatLiteral",
             value: +numAsString
@@ -119,10 +148,17 @@ export class Parser {
     }
 
     parseAddition(): Expression {
-        let left = this.parseReverseSummary()
+        let operation: Token | null = null
+        if (this.peek().value === "-") {
+            operation = this.consume()
+        }
+        let left = this.parseMultiplication()
+        if (operation) {
+            left = {kind: "UnaryExpression", inner: left, operation: operation} as UnaryExpression
+        }
         while (this.typeMatches(0, TokenType.AdditiveOperators)) {
             const operator = this.consume()
-            const right = this.parseReverseSummary()
+            const right = this.parseMultiplication()
             left = {
                 kind: "BinaryExpression",
                 lhs: left,
@@ -131,21 +167,6 @@ export class Parser {
             } as BinaryExpression
         }
         return left
-    }
-
-    parseReverseSummary(): Expression {
-        let operation: Token | null = null
-        if (this.peek().value === "-") {
-            operation = this.consume()
-        }
-
-        let inner = this.parseMultiplication()
-
-        if (operation) {
-            inner = {kind: "UnaryExpression", inner: inner, operation: operation} as UnaryExpression
-        }
-
-        return inner
     }
 
     parseMultiplication(): Expression {

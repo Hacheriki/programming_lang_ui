@@ -175,7 +175,8 @@ textarea {
 mark {
   border-radius: 3px;
   color: transparent;
-  background-color: rgba(255, 89, 89, 0.74);
+  background-color: rgba(255, 89, 89, 0.37);
+  text-decoration: red underline wavy;
 }
 
 pre {

@@ -7,7 +7,7 @@ export class LanguageSpecifics {
     static firstNumber = "0"
     static lastNumber = "7"
 
-    static skippables = [" ", "/n", "/t", String.fromCharCode(13), String.fromCharCode(10)]
+    static skippables = [" ", "/t", String.fromCharCode(13)]
 
     static booleans = ["&&", "||", "!", "И", "ИЛИ", "НЕ"]
     static additives = ["+", "-"]

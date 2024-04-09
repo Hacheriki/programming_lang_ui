@@ -7,13 +7,24 @@ export function tokenize(sourceCode: SourceCode): Token[] {
     const tokens: Token[] = []
 
     let isSpaceBefore = false
+    let startOfStatement = 0
     while (!sourceCode.isLast()) {
         if (sourceCode.isNextSkipabble()) {
             sourceCode.consume()
             isSpaceBefore = true // TO FORCE SPACES SOMETIMES
             continue
         }
-        if (sourceCode.peek() === "=") {
+        if (sourceCode.peek() === "\n") {
+            tokens.push({
+                type: TokenType.NewLine,
+                value: sourceCode.consume(),
+                isSpaceBefore,
+                from: startOfStatement,
+                to: sourceCode.currentSymbol
+            })
+            startOfStatement = sourceCode.currentSymbol // TO FORCE NEWLINES
+        }
+        else if (sourceCode.peek() === "=") {
             tokens.push({
                 type: TokenType.Equals,
                 value: sourceCode.consume(),

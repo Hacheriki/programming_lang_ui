@@ -3,6 +3,7 @@ import {LanguageSpecifics} from "./languageSpecifics";
 export class SourceCode {
     private readonly sourceCode: string[]
     currentSymbol: number = 0
+
     constructor(sourceCode: string) {
         this.sourceCode = sourceCode.split("").reverse()
     }
