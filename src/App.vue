@@ -6,18 +6,20 @@ import {Parser} from "@/programmingLang/parser/parser";
 import Scope from "@/programmingLang/compiler/scope";
 import {evaluate} from "@/programmingLang/compiler/compiler";
 import {LangCompileError, LangSyntaxError} from "@/programmingLang/types/languageError";
+import type {RuntimeValue} from "@/programmingLang/types/values";
 
 const backdropRef = ref<HTMLDivElement>()
 const highlightRef = ref<HTMLDivElement>()
 const srcRef = ref<HTMLTextAreaElement>()
 
+let output = ref<string>("")
+
 let highlightInner = ref<string>("")
 let textareaScroll: number = 0
 
 // TODO: SPLIT FILES
-// TODO: ADD OUTPUT
-// TODO: ADD EBNF
 // TODO: ADD MORE ERROR CHECKS
+// TODO: FIX UNARY MINUS
 
 function highlightText() {
   if (!srcRef.value) return
@@ -30,7 +32,12 @@ function highlightText() {
 
     const scope = new Scope()
     const runtime = evaluate(ast, scope)
-    console.log(scope)
+    let variablesLog = ""
+    scope.variables.forEach((v: any,k: any) => {
+      console.log(k)
+      variablesLog += `${k} = ${v.value}\n`
+    })
+    output.value = variablesLog
   } catch (e) {
     let start = 0
     let end = 0
@@ -54,6 +61,7 @@ function highlightText() {
     const afterHighlight = originalText.substring(end);
 
     highlightInner.value = beforeHighlight + '<mark>' + highlightedText + '</mark>' + afterHighlight;
+    output.value = (e as Error).message
   }
 }
 
@@ -78,36 +86,59 @@ onMounted(() => {
 </script>
 
 <template>
-  <div style="padding: 20px; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.3) 0 1px 3px;">
-    <h1>Введите исходный код</h1>
-    <div class="srcContainer">
-      <div class="backdrop" ref="backdropRef">
-        <div class="highlights" ref="highlightRef" v-html="highlightInner"></div>
-      </div>
-      <textarea @input="clearMarks" @scroll="updateScroll" ref="srcRef" autocomplete="off" autocapitalize="off" spellcheck="false">Программа
+  <div style="display: flex; flex-direction: row; padding: 20px; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.3) 0 1px 3px;">
+    <div>
+      <h1>Исходный код</h1>
+      <div class="srcContainer">
+        <div class="backdrop" ref="backdropRef">
+          <div class="highlights" ref="highlightRef" v-html="highlightInner"></div>
+        </div>
+        <textarea @input="clearMarks" @scroll="updateScroll" ref="srcRef" autocomplete="off" autocapitalize="off" spellcheck="false">Программа
 Выполнить:123.321 Первое
 Сохранить:123.1 Второе
 
 А321=1+1
 А123=-А321+123*2+Косинус Синус 2+!0
-Т123=1/0
+Т123=А321
 
 Конец</textarea>
+      </div>
+      <button class="pure-material-button-contained" @click="highlightText" style="margin-top: 10px;">Выполнить</button>
+      <div class="output"><pre>Вывод:<br>{{output}}</pre></div>
     </div>
-    <button class="pure-material-button-contained" @click="highlightText" style="margin-top: 10px;">Выполнить</button>
+    <div style="margin-left: 30px">
+      <h1>БНФ языка</h1>
+      <div class="srcContainer">
+        <textarea disabled>Язык = "Программа" Множества Опер...Опер "Конец"
+Множества = Множество...Множество
+Множество = ["Выполнить" ! "Сохранить"] ":" Вещ...Вещ ["Первое" ! "Второе"]
+Опер = Перем "=" Пр.ч.
+Пр.ч = </"-"/> Блок ["+" ! "-"]...Блок
+Блок = Блок2 ["*" ! "/"]...Блок2
+Блок2 = Блок3 ["&&" ! "||"]... Блок3
+Блок3 = </"!"/> Блок4
+Блок4 = </Функ...Функ/> Блок5
+Блок5 = Цел ! Перем
+Перем = Б</Сим...Сим/>
+Сим=Б!Ц
+Б="А"!"Б"!..."Я"!"а"!"б"!..."я"
+Ц="0"!"1"!..."7"
+        </textarea>
+      </div>
+    </div>
   </div>
 </template>
 
 <style>
 
 .backdrop, textarea, .srcContainer {
-  width: 800px;
+  width: 500px;
   height: 400px;
 }
 
 .highlights, textarea {
   padding: 10px;
-  font: 20px/28px 'Open Sans', sans-serif;
+  font: 14px/20px 'Open Sans', sans-serif;
   letter-spacing: 1px;
 }
 
@@ -145,5 +176,12 @@ mark {
   border-radius: 3px;
   color: transparent;
   background-color: rgba(255, 89, 89, 0.74);
+}
+
+pre {
+  border: 2px solid #74637f;
+  margin-top: 5px;
+  padding: 5px;
+  border-radius: 2px;
 }
 </style>
