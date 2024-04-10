@@ -115,7 +115,7 @@ export function tokenize(sourceCode: SourceCode): Token[] {
                     throw new LangSyntaxError(`Неизвестная последовательность символов '${value}'`, sourceCode.currentSymbol - value.length + 1, sourceCode.currentSymbol) // TODO: REDO
                 }
             } else {
-                throw new LangSyntaxError(`Неизвестный символ ${sourceCode.consume().charCodeAt(0)}`, sourceCode.currentSymbol, sourceCode.currentSymbol) // TODO: REDO
+                throw new LangSyntaxError(`Неизвестный символ ${sourceCode.peek()} (${sourceCode.consume().charCodeAt(0)})`, sourceCode.currentSymbol, sourceCode.currentSymbol) // TODO: REDO
             }
         }
         isSpaceBefore = false

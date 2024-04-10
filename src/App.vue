@@ -17,9 +17,11 @@ let output = ref<string>("")
 let highlightInner = ref<string>("")
 let textareaScroll: number = 0
 
-// TODO: SPLIT FILES
-// TODO: ADD MORE ERROR CHECKS
-// TODO: FIX UNARY MINUS
+// TODO: РАЗДЕЛИТЬ НА ФАЙЛЫ
+// TODO: Сделать пример больше
+// TODO: Добавить больше проверок
+// TODO: Починить првоерку 'В программе должна быть хотябы одна' 'В множестве должно быть хотяб одна'
+// TODO: Добавить проверку 'Неверный формат переменной'
 
 function highlightText() {
   if (!srcRef.value) return

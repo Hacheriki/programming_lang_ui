@@ -10,7 +10,6 @@ import type {
     Program,
     Sets,
     SetSingle,
-    Statement,
     UnaryExpression
 } from '../types/astNodes.js'
 import {LangCompileError} from "../types/languageError";
@@ -46,9 +45,12 @@ export class Parser {
     }
 
     expect(err: string, ...tokenTypes: TokenType[]): Token {
+        const previousToken = this.lastConsumedToken
         const currentToken = this.consume()
         if (!currentToken || !tokenTypes.includes(currentToken.type)) {
-            console.log(this.tokens)
+            if (currentToken.type === TokenType.NewLine) {
+                throw new LangCompileError(err, previousToken!)
+            }
             throw new LangCompileError(err, currentToken)
         }
 
@@ -244,7 +246,7 @@ export class Parser {
                 throw new LangCompileError("Две операции не могут стоять подряд", this.peek())
         }
 
-        const currentToken = this.expect("В выражении должны быть Переменная или Целое число", TokenType.Integer, TokenType.Identifier)
+        const currentToken = this.expect(`После '${this.lastConsumedToken?.value}' должны быть Переменная или Целое число`, TokenType.Integer, TokenType.Identifier)
 
         switch (currentToken.type) {
             case TokenType.Identifier:
