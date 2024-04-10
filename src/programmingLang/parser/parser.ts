@@ -78,10 +78,14 @@ export class Parser {
 
         this.expect("Программа должна начинаться со слова 'Программа'", TokenType.Start)
         program.body.push(this.parseSets())
+        this.skipNewLines()
+        if (this.peek().type != TokenType.Identifier) {
+            throw new LangCompileError("В программе должна быть хотя бы одна операция", this.peek())
+        }
         do {
             this.expectNewStatement("Перед началом нового оператора должна идти новая строка")
             program.body.push(this.parseOperator())
-        } while (this.typeMatchesStatement(1, TokenType.Equals))
+        } while (!this.typeMatchesStatement(0, TokenType.End, TokenType.EOF))
         this.expectNewStatement("Конец программы должен быть на новой строке")
         this.expect("Программа должна заканчиваться словом 'Конец'", TokenType.End)
         this.expect("После слова 'Конец' не может быть символов", TokenType.EOF)
@@ -94,6 +98,11 @@ export class Parser {
         const sets: Sets = {
             kind: "Sets",
             body: []
+        }
+        this.skipNewLines()
+        console.log(this.peek())
+        if (this.peek().type != TokenType.Execute && this.peek().type != TokenType.Save) {
+            throw new LangCompileError("В программе должно быть хотя бы одно множество", this.peek())
         }
         do {
             this.expectNewStatement("Перед началом нового множества должна идти новая строка")

@@ -88,8 +88,9 @@ export function tokenize(sourceCode: SourceCode): Token[] {
                         from: sourceCode.currentSymbol - value.length,
                         to: sourceCode.currentSymbol
                     })
+                } else {
+                    throw new LangSyntaxError("Неизветстный логический символ, допустимые символы: '&&' или '||'", sourceCode.currentSymbol - value.length + 1, sourceCode.currentSymbol) // TODO: REDO
                 }
-                throw new LangSyntaxError("Неизветстный логический символ, допустимые символы: '&&' или '||'", sourceCode.currentSymbol - value.length + 1, sourceCode.currentSymbol) // TODO: REDO
             } else if (sourceCode.isNextNumeric()) {
                 let value = ""
                 while (sourceCode.isNextNumeric()) {
