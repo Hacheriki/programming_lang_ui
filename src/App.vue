@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import {h, onMounted, ref} from "vue";
+import {onMounted, ref} from "vue";
 import {SourceCode} from "@/programmingLang/lexer/sourceCode";
 import {tokenize} from "@/programmingLang/lexer/tokenize";
 import {Parser} from "@/programmingLang/parser/parser";
 import Scope from "@/programmingLang/compiler/scope";
 import {evaluate} from "@/programmingLang/compiler/compiler";
 import {LangCompileError, LangSyntaxError} from "@/programmingLang/types/languageError";
-import type {RuntimeValue} from "@/programmingLang/types/values";
 
 const backdropRef = ref<HTMLDivElement>()
 const highlightRef = ref<HTMLDivElement>()
@@ -32,7 +31,7 @@ function highlightText() {
     const ast = new Parser(tokens).parse()
 
     const scope = new Scope()
-    const runtime = evaluate(ast, scope)
+    evaluate(ast, scope)
     let variablesLog = ""
     scope.variables.forEach((v: any,k: any) => {
       console.log(k)
@@ -95,12 +94,15 @@ onMounted(() => {
           <div class="highlights" ref="highlightRef" v-html="highlightInner"></div>
         </div>
         <textarea @input="clearMarks" @scroll="updateScroll" ref="srcRef" autocomplete="off" autocapitalize="off" spellcheck="false">Программа
-Выполнить:123.321 Первое
+Выполнить:123.321 12.123 Первое
 Сохранить:123.1 Второе
+Выполнить:123.1 1.32 12.2 Второе
 
-А321=1+1
-А123=-А321+123*2+Косинус Синус 2+!0
-Т123=А321
+ПЕРЕМ1 = 400 + 200
+ПЕРЕМ2 = ПЕРЕМ1 * 2
+ПЕРЕМ3 = Косинус Синус ПЕРЕМ2 + !0
+ПЕРЕМ4 = !0 && 1 || !ПЕРЕМ3
+ПЕРЕМ5 = ПЕРЕМ1 + ПЕРЕМ2 * ПЕРЕМ3 + ПЕРЕМ4
 
 Конец</textarea>
       </div>

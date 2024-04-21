@@ -9,6 +9,7 @@ import {
 } from "../types/astNodes";
 import Scope from "./scope";
 import {type BooleanValue, makeBoolean, makeNull, makeNumber, type NumberValue, type RuntimeValue} from "../types/values";
+import {LangCompileError} from "@/programmingLang/types/languageError";
 
 export function evaluate(astNode: Statement, scope: Scope = new Scope()): RuntimeValue {
     switch (astNode.kind) {
@@ -84,6 +85,8 @@ function evaluateBinary(binary: BinaryExpression, scope: Scope): RuntimeValue {
         case "-":
         case "*":
         case "/":
+            if (toNumberValue(rhs).value === 0)
+                throw new LangCompileError("Невозможно деление на 0", binary.operator)
             return evaluateBinaryNumbers(toNumberValue(lhs), toNumberValue(rhs), binary.operator.value)
         default:
             throw Error("Неизвестная бинарная операция")
@@ -94,10 +97,10 @@ function evaluateBinaryLogic(lhs: BooleanValue, rhs: BooleanValue, operation: st
     switch (operation) {
         case "&&" :
         case "И":
-            return makeBoolean(lhs.value && rhs.value)
+            return toNumberValue(makeBoolean(lhs.value && rhs.value))
         case "||":
         case "ИЛИ":
-            return makeBoolean(lhs.value || rhs.value)
+            return toNumberValue(makeBoolean(lhs.value || rhs.value))
         default:
             throw Error("Неизвестная логическая операция")
     }

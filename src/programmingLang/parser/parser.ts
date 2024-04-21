@@ -119,8 +119,24 @@ export class Parser {
         do {
             numbers.push(this.parseFloat())
         } while (this.typeMatches(1, TokenType.Dot))
+
+        if (this.peek().type === TokenType.Integer) {
+            throw new LangCompileError("Неверный формат дробного числа, ожидалось ЦЕЛОЕ.ЦЕЛОЕ", this.peek())
+        } else if (!this.typeMatches(0, TokenType.First, TokenType.Second)) {
+            if (this.peek().type === TokenType.NewLine) {
+                throw new LangCompileError("Множество должно заканчиваться на 'Первое' или 'Второе'", this.peek())
+            } else {
+                throw new LangCompileError(`Неизвестен '${this.peek().value}' в контексте множеств`, this.peek())
+            }
+        }
+
         const additional = this.expect("Множество должно заканчиваться на 'Первое' или 'Второе'", TokenType.First, TokenType.Second)
+
         if (!additional.isSpaceBefore) throw new LangCompileError("Перед 'Первое' или 'Второе' должен быть разделитель", additional)
+
+        if (this.peek().type !== TokenType.NewLine) {
+            throw new LangCompileError("После 'Первое' или 'Второе' не может быть других выражений", this.peek())
+        }
 
         return {
             kind: "SetSingle",
@@ -151,6 +167,10 @@ export class Parser {
         const identifier = this.expect("Операция должна начинаться с объявления переменной", TokenType.Identifier)
         this.expect("После объявление переменной должен стоять знак '='", TokenType.Equals)
         const rhs = this.parseAddition()
+        if (!this.typeMatches(0, TokenType.NewLine)) {
+            console.log(this.tokens, this.lastConsumedToken)
+            throw new LangCompileError("Выражения должны быть объединены операторами сложения ('+','-')\nили логическими операторами ('&&','||','1') или функциями\n('Синус', 'Косинус', 'Тангенс', 'Котангенс')", this.peek())
+        }
         return {
             kind: "Operation",
             identifier: identifier,
@@ -231,7 +251,7 @@ export class Parser {
 
     parseFunctions(): Expression {
         const functions: Token[] = []
-        while (this.typeMatches(0,TokenType.Function)) {
+        while (this.typeMatches(0, TokenType.Function)) {
             functions.push(this.consume())
         }
 

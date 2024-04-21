@@ -125,13 +125,3 @@ export function tokenize(sourceCode: SourceCode): Token[] {
 
     return tokens
 }
-
-// import * as fs from "fs";
-
-// const resultTokens = tokenize(new SourceCode(fs.readFileSync("./test.lang").toString()))
-//
-// for (const resultToken of resultTokens) {
-//     console.log(`${TokenType[resultToken.type]} - ${resultToken.value}`)
-// }
-
-//TODO: FIX <NUM_LITERAL>*no_space*<RESERVED|IDENTIFIER>

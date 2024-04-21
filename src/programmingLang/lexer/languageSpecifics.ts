@@ -9,7 +9,7 @@ export class LanguageSpecifics {
 
     static skippables = [" ", "/t", String.fromCharCode(13)]
 
-    static booleans = ["&&", "||", "!", "И", "ИЛИ", "НЕ"]
+    static booleans = ["&&", "||", "!"]
     static additives = ["+", "-"]
     static multiplicatives = ["*", "/"]
 
@@ -24,8 +24,6 @@ export class LanguageSpecifics {
         "Косинус": TokenType.Function,
         "Тангенс": TokenType.Function,
         "Котангенс": TokenType.Function,
-        "ИЛИ": TokenType.LogicOperators,
-        "НЕ": TokenType.LogicOperators,
         "&&": TokenType.LogicOperators,
         "||": TokenType.LogicOperators
     }
