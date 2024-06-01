@@ -105,7 +105,7 @@ onMounted(() => {
 Ввод
 5: А126 = 7+7;
 Ввод
-6: А127 = 1+1;
+6: А127 = 1+1
 Конец</textarea>
             </div>
             <button class="pure-material-button-contained" @click="highlightText" style="margin-top: 10px;">Выполнить

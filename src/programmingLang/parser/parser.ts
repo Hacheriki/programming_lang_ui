@@ -79,6 +79,10 @@ export class Parser {
         this.expect("Программа должна начинаться со слова 'Программа'", TokenType.Start)
         program.body.push(this.parseChains())
         this.skipNewLines()
+        console.log(this.peek().type)
+        if (this.peek().type !== TokenType.End) {
+            throw new LangCompileError("Программа должна заканчиваться словом 'Конец'", this.peek())
+        }
         this.expectNewStatement("Конец программы должен быть на новой строке")
         this.expect("Программа должна заканчиваться словом 'Конец'", TokenType.End)
         this.expect("После слова 'Конец' не может быть символов", TokenType.EOF)
@@ -99,6 +103,9 @@ export class Parser {
             // this.expectNewStatement("Перед началом нового множества должна идти новая строка")
             chains.body.push(this.parseChain())
             if (this.peek().type != TokenType.End) {
+                if (this.peek().type === TokenType.Integer || this.peek().type === TokenType.Identifier) {
+                    throw new LangCompileError(`Перед '${this.peek().value}' должна быть операция`, this.peek())
+                }
                 if (this.peek().type === TokenType.CloseBracket || this.peek().type === TokenType.CloseParan) {
                     throw new LangCompileError("Перед закрывающей скобкой должна быть открывающая", this.peek())
                 }
@@ -112,9 +119,12 @@ export class Parser {
                 if (this.peek().type === TokenType.OpenBracket || this.peek().type === TokenType.OpenParan) {
                     throw new LangCompileError("После открывающей скобки должно быть выражение", this.peek())
                 }
+                if (this.peek().type === TokenType.EOF) {
+                    throw new LangCompileError("Программа должна заканчиваться словом 'Конец'", this.peek())
+                }
                 this.expect("Между звеньями должен быть разделитель ';'", TokenType.Semicolon)
             }
-        } while (!this.typeMatchesStatement(0, TokenType.End))
+        } while (!this.typeMatchesStatement(0, TokenType.End, TokenType.EOF))
 
         return chains
     }
