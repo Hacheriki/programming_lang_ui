@@ -140,9 +140,8 @@ export class Parser {
     }
 
     parseAddition(): Expression {
-        let left = this.parseMultiplication()
+        let left = this.parseReverseAddition()
         while (this.typeMatches(0, TokenType.AdditiveOperators)) {
-            console.log(this.peek())
             const operator = this.consume()
             const right = this.parseMultiplication()
             left = {
@@ -153,6 +152,24 @@ export class Parser {
             } as BinaryExpression
         }
         return left
+    }
+
+    parseReverseAddition(): Expression {
+        let operation: Token | null = null
+        if (this.peek().value === "-") {
+            operation = this.consume()
+        }
+        let inner = this.parseMultiplication()
+
+        if (operation) {
+            inner = {
+                kind: "UnaryExpression",
+                inner: inner,
+                operation: operation
+            } as UnaryExpression
+        }
+
+        return inner
     }
 
     parseMultiplication(): Expression {

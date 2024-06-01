@@ -104,7 +104,7 @@ function evaluateBinary(binary: BinaryExpression, scope: Scope): RuntimeValue {
         case "-":
         case "*":
         case "/":
-            if (toNumberValue(rhs).value === 0)
+            if (toNumberValue(rhs).value === 0 && binary.operator.value === "/")
                 throw new LangCompileError("Невозможно деление на 0", binary.operator)
             return evaluateBinaryNumbers(toNumberValue(lhs), toNumberValue(rhs), binary.operator.value)
         default:
