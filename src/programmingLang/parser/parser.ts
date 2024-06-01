@@ -99,6 +99,19 @@ export class Parser {
             // this.expectNewStatement("Перед началом нового множества должна идти новая строка")
             chains.body.push(this.parseChain())
             if (this.peek().type != TokenType.End) {
+                if (this.peek().type === TokenType.CloseBracket || this.peek().type === TokenType.CloseParan) {
+                    throw new LangCompileError("Перед закрывающей скобкой должна быть открывающая", this.peek())
+                }
+                if (this.peek().type === TokenType.OpenBracket && this.lastConsumedToken?.type === TokenType.CloseBracket ||
+                    this.peek().type === TokenType.OpenParan && this.lastConsumedToken?.type === TokenType.CloseParan ||
+                    this.peek().type === TokenType.OpenBracket && this.lastConsumedToken?.type === TokenType.CloseParan ||
+                    this.peek().type === TokenType.OpenParan && this.lastConsumedToken?.type === TokenType.CloseBracket
+                ) {
+                    throw new LangCompileError("Между скобками должна быть операция", this.peek())
+                }
+                if (this.peek().type === TokenType.OpenBracket || this.peek().type === TokenType.OpenParan) {
+                    throw new LangCompileError("После открывающей скобки должно быть выражение", this.peek())
+                }
                 this.expect("Между звеньями должен быть разделитель ';'", TokenType.Semicolon)
             }
         } while (!this.typeMatchesStatement(0, TokenType.End))
