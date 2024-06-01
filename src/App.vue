@@ -89,7 +89,7 @@ onMounted(() => {
 
 <template>
     <div
-        style="display: flex; flex-direction: row; padding: 20px; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.3) 0 1px 3px;">
+        style="display: flex; flex-direction: row; padding: 20px;">
         <div>
             <h1>Исходный код</h1>
             <div class="srcContainer">
@@ -146,14 +146,14 @@ onMounted(() => {
 
 .highlights, textarea {
     padding: 10px;
-    font: 14px/20px 'Open Sans', sans-serif;
+    font: 14px/20px 'Times New Roman', sans-serif;
     letter-spacing: 1px;
 }
 
 .backdrop {
     position: absolute;
     z-index: 1;
-    border: 2px solid #685972;
+    border: 2px solid #000;
     background-color: #fff;
     overflow: auto;
     pointer-events: none;
@@ -171,9 +171,9 @@ textarea {
     position: absolute;
     z-index: 2;
     margin: 0;
-    border: 2px solid #74637f;
+    border: 2px solid #000;
     border-radius: 0;
-    color: #444;
+    color: #000;
     background-color: transparent;
     overflow: auto;
     resize: none;
@@ -181,16 +181,17 @@ textarea {
 }
 
 mark {
-    border-radius: 3px;
     color: transparent;
     background-color: rgba(255, 89, 89, 0.37);
     text-decoration: red underline wavy;
 }
 
 pre {
-    border: 2px solid #74637f;
+    border: 2px solid #000;
     margin-top: 5px;
     padding: 5px;
     border-radius: 2px;
+    text: #000;
+    font-size: 12pt;
 }
 </style>
