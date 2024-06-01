@@ -1,22 +1,28 @@
 import {
-    type BinaryExpression, type FunctionExpression,
+    type BinaryExpression, type Chains, type ChainSingle,
     type Identifier,
     type IntegerLiteral,
-    type Operation,
     type Program,
     type Statement,
-    type UnaryExpression
+    type UnaryExpression, type Word
 } from "../types/astNodes";
 import Scope from "./scope";
-import {type BooleanValue, makeBoolean, makeNull, makeNumber, type NumberValue, type RuntimeValue} from "../types/values";
+import {
+    type BooleanValue,
+    makeBoolean,
+    makeNull,
+    makeNumber,
+    type NumberValue,
+    type RuntimeValue
+} from "../types/values";
 import {LangCompileError} from "@/programmingLang/types/languageError";
 
 export function evaluate(astNode: Statement, scope: Scope = new Scope()): RuntimeValue {
     switch (astNode.kind) {
         case "Program":
             return evaluateProgram(astNode as Program, scope)
-        case "Operation":
-            return evaluateOperation(astNode as Operation, scope)
+        case "Word":
+            return evaluateOperation(astNode as Word, scope)
         case "Identifier":
             return evaluateIdentifier(astNode as Identifier, scope)
         case "IntegerLiteral":
@@ -25,18 +31,15 @@ export function evaluate(astNode: Statement, scope: Scope = new Scope()): Runtim
             return evaluateUnary(astNode as UnaryExpression, scope)
         case "BinaryExpression":
             return evaluateBinary(astNode as BinaryExpression, scope)
-        case "FunctionExpression":
-            return evaluateFunction(astNode as FunctionExpression, scope)
-        case "Sets":
-            return makeNull()
-        case "SetSingle":
-            return makeNull()
-        case "FloatLiteral":
-            return  makeNull()
+        case "Chains":
+            return evaluateChains(astNode as Chains, scope)
+        case "ChainSingle":
+            return evaluateChain(astNode as ChainSingle, scope)
         default:
             throw Error("Неизвестное выражение")
     }
 }
+
 function evaluateProgram(program: Program, scope: Scope): RuntimeValue {
     let lastEvaluated: RuntimeValue = makeNull()
     for (const statement of program.body) {
@@ -45,9 +48,27 @@ function evaluateProgram(program: Program, scope: Scope): RuntimeValue {
     return lastEvaluated
 }
 
-function evaluateOperation(operation: Operation, scope: Scope): RuntimeValue {
-    const value = evaluate(operation.rhs, scope)
-    return scope.declareVariable(operation.identifier, value)
+function evaluateOperation(word: Word, scope: Scope): RuntimeValue {
+    const value = evaluate(word.rhs, scope)
+    return scope.declareVariable(word.identifier, value)
+}
+
+function evaluateChains(chains: Chains, scope: Scope): RuntimeValue {
+    let lastEvaluated: RuntimeValue = makeNull()
+    for (const chain of chains.body) {
+        lastEvaluated = evaluate(chain, scope)
+    }
+
+    return lastEvaluated
+}
+
+function evaluateChain(chain: ChainSingle, scope: Scope): RuntimeValue {
+    let lastEvaluated: RuntimeValue = makeNull()
+    for (const word of chain.body) {
+        lastEvaluated = evaluate(word, scope)
+    }
+
+    return lastEvaluated
 }
 
 function evaluateIdentifier(identifier: Identifier, scope: Scope): RuntimeValue {
@@ -77,9 +98,7 @@ function evaluateBinary(binary: BinaryExpression, scope: Scope): RuntimeValue {
 
     switch (binary.operator.value) {
         case "&&" :
-        case "И":
         case "||":
-        case "ИЛИ":
             return evaluateBinaryLogic(toBooleanValue(lhs), toBooleanValue(rhs), binary.operator.value)
         case "+":
         case "-":
@@ -96,10 +115,8 @@ function evaluateBinary(binary: BinaryExpression, scope: Scope): RuntimeValue {
 function evaluateBinaryLogic(lhs: BooleanValue, rhs: BooleanValue, operation: string) {
     switch (operation) {
         case "&&" :
-        case "И":
             return toNumberValue(makeBoolean(lhs.value && rhs.value))
         case "||":
-        case "ИЛИ":
             return toNumberValue(makeBoolean(lhs.value || rhs.value))
         default:
             throw Error("Неизвестная логическая операция")
@@ -140,28 +157,5 @@ function toBooleanValue(value: RuntimeValue): BooleanValue {
             return makeBoolean((value as BooleanValue).value)
         default:
             throw Error("Невозможно привести тип к целочисленному")
-    }
-}
-
-// "Синус": TokenType.Function,
-// "Косинус": TokenType.Function,
-// "Тангенс": TokenType.Function,
-// "Котангенс": TokenType.Function,
-
-// TODO: FLOAT???
-function evaluateFunction(functionExpression: FunctionExpression, scope: Scope): RuntimeValue {
-    const inner = toNumberValue(evaluate(functionExpression.inner, scope))
-
-    switch (functionExpression.func.value) {
-        case "Синус":
-            return makeNumber(Math.sin(inner.value))
-        case "Косинус":
-            return makeNumber(Math.cos(inner.value))
-        case "Тангенс":
-            return makeNumber(Math.tan(inner.value))
-        case "Котангенс":
-            return makeNumber(1 / Math.tan(inner.value))
-        default:
-            throw Error("Неизвестная функция")
     }
 }

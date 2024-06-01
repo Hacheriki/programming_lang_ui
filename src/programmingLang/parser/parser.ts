@@ -1,22 +1,22 @@
 import {type Token, TokenType} from '../types/tokens'
 import type {
     BinaryExpression,
+    Chains,
+    ChainSingle,
     Expression,
-    FloatLiteral,
-    FunctionExpression,
     Identifier,
     IntegerLiteral,
-    Operation,
     Program,
-    Sets,
-    SetSingle,
-    UnaryExpression
+    UnaryExpression,
+    Word
 } from '../types/astNodes.js'
 import {LangCompileError} from "../types/languageError";
 
 export class Parser {
     tokens: Token[] = []
     lastConsumedToken: Token | undefined
+    bracketCounter: number = 0
+    paranCounter: number = 0
 
     constructor(tokens: Token[]) {
         this.tokens = tokens
@@ -77,15 +77,8 @@ export class Parser {
         }
 
         this.expect("Программа должна начинаться со слова 'Программа'", TokenType.Start)
-        program.body.push(this.parseSets())
+        program.body.push(this.parseChains())
         this.skipNewLines()
-        if (this.peek().type != TokenType.Identifier) {
-            throw new LangCompileError("В программе должна быть хотя бы одна операция", this.peek())
-        }
-        do {
-            this.expectNewStatement("Перед началом нового оператора должна идти новая строка")
-            program.body.push(this.parseOperator())
-        } while (!this.typeMatchesStatement(0, TokenType.End, TokenType.EOF))
         this.expectNewStatement("Конец программы должен быть на новой строке")
         this.expect("Программа должна заканчиваться словом 'Конец'", TokenType.End)
         this.expect("После слова 'Конец' не может быть символов", TokenType.EOF)
@@ -93,101 +86,63 @@ export class Parser {
         return program
     }
 
-
-    parseSets(): Sets {
-        const sets: Sets = {
-            kind: "Sets",
+    parseChains(): Chains {
+        const chains: Chains = {
+            kind: "Chains",
             body: []
         }
         this.skipNewLines()
-        console.log(this.peek())
-        if (this.peek().type != TokenType.Execute && this.peek().type != TokenType.Save) {
-            throw new LangCompileError("В программе должно быть хотя бы одно множество", this.peek())
+        if (this.peek().type != TokenType.Enter) {
+            throw new LangCompileError("В программе должно быть хотя бы одно звено", this.peek())
         }
         do {
-            this.expectNewStatement("Перед началом нового множества должна идти новая строка")
-            sets.body.push(this.parseSet())
-        } while (this.typeMatchesStatement(0, TokenType.Execute, TokenType.Save))
-
-        return sets
-    }
-
-    parseSet(): SetSingle {
-        const action = this.expect("Множество должно начинаться со слов 'Выполнить' или 'Сохранить'", TokenType.Execute, TokenType.Save)
-        this.expect("После 'Выполнить' или 'Сохранить' должно стоять ':' (двоеточие)", TokenType.Colon)
-        const numbers: FloatLiteral[] = []
-        do {
-            numbers.push(this.parseFloat())
-        } while (this.typeMatches(1, TokenType.Dot))
-
-        if (this.peek().type === TokenType.Integer) {
-            throw new LangCompileError("Неверный формат дробного числа, ожидалось ЦЕЛОЕ.ЦЕЛОЕ", this.peek())
-        } else if (!this.typeMatches(0, TokenType.First, TokenType.Second)) {
-            if (this.peek().type === TokenType.NewLine) {
-                throw new LangCompileError("Множество должно заканчиваться на 'Первое' или 'Второе'", this.peek())
-            } else {
-                throw new LangCompileError(`Неизвестен '${this.peek().value}' в контексте множеств`, this.peek())
+            // this.expectNewStatement("Перед началом нового множества должна идти новая строка")
+            chains.body.push(this.parseChain())
+            if (this.peek().type != TokenType.End) {
+                this.expect("Между звеньями должен быть разделитель ';'", TokenType.Semicolon)
             }
-        }
+        } while (!this.typeMatchesStatement(0, TokenType.End))
 
-        const additional = this.expect("Множество должно заканчиваться на 'Первое' или 'Второе'", TokenType.First, TokenType.Second)
-
-        if (!additional.isSpaceBefore) throw new LangCompileError("Перед 'Первое' или 'Второе' должен быть разделитель", additional)
-
-        if (this.peek().type !== TokenType.NewLine) {
-            throw new LangCompileError("После 'Первое' или 'Второе' не может быть других выражений", this.peek())
-        }
-
-        return {
-            kind: "SetSingle",
-            action: action,
-            body: numbers,
-            additional: additional
-        }
+        return chains
     }
 
-    parseFloat(): FloatLiteral {
-        let numAsString: string = ""
-        numAsString += this.expect("Вещественное число должно начинаться с целого числа", TokenType.Integer).value
-        numAsString += this.expect("Вещественное число долно иметь '.' (точку) как разделитель", TokenType.Dot).value
-        if (this.lastConsumedToken?.isSpaceBefore) {
-            throw new LangCompileError("Между точкой и целым не может быть пробела в вещественных числах", this.lastConsumedToken!)
+    parseChain(): ChainSingle {
+        this.expect("Звено должно начинаться со слова 'Ввод'", TokenType.Enter)
+        const chain: ChainSingle = {
+            kind: "ChainSingle",
+            body: []
         }
-        numAsString += this.expect("Вещественное число долно заканчиваться целым числом", TokenType.Integer).value
-        if (this.lastConsumedToken?.isSpaceBefore) {
-            throw new LangCompileError("Между точкой и целым не может быть пробела в вещественных числах", this.lastConsumedToken!)
-        }
-        return {
-            kind: "FloatLiteral",
-            value: +numAsString
-        }
+
+        do {
+            this.skipNewLines()
+            chain.body.push(this.parseWord())
+        } while (this.typeMatchesStatement(1, TokenType.Colon))
+
+        return chain
     }
 
-    parseOperator(): Operation {
-        const identifier = this.expect("Операция должна начинаться с объявления переменной", TokenType.Identifier)
+    parseWord(): Word {
+        this.expect("Слово должно начинаться с метки", TokenType.Integer)
+        this.expect("После метки должно идти ':'", TokenType.Colon)
+
+        const identifier = this.expect("После объявления метки должно идти объявление переменной", TokenType.Identifier)
         this.expect("После объявление переменной должен стоять знак '='", TokenType.Equals)
         const rhs = this.parseAddition()
-        if (!this.typeMatches(0, TokenType.NewLine)) {
-            console.log(this.tokens, this.lastConsumedToken)
-            throw new LangCompileError("Выражения должны быть объединены операторами сложения ('+','-')\nили логическими операторами ('&&','||','1') или функциями\n('Синус', 'Косинус', 'Тангенс', 'Котангенс')", this.peek())
-        }
+        // if (!this.typeMatches(0, TokenType.NewLine)) {
+        //     console.log(this.tokens, this.lastConsumedToken)
+        //     throw new LangCompileError("Выражения должны быть объединены операторами сложения ('+','-')\nили логическими операторами ('&&','||','1')", this.peek())
+        // }
         return {
-            kind: "Operation",
+            kind: "Word",
             identifier: identifier,
             rhs: rhs
         }
     }
 
     parseAddition(): Expression {
-        let operation: Token | null = null
-        if (this.peek().value === "-") {
-            operation = this.consume()
-        }
         let left = this.parseMultiplication()
-        if (operation) {
-            left = {kind: "UnaryExpression", inner: left, operation: operation} as UnaryExpression
-        }
         while (this.typeMatches(0, TokenType.AdditiveOperators)) {
+            console.log(this.peek())
             const operator = this.consume()
             const right = this.parseMultiplication()
             left = {
@@ -233,10 +188,10 @@ export class Parser {
 
     parseReverseLogic(): Expression {
         let operation: Token | null = null
-        if (this.peek().value === "!" || this.peek().value === "НЕ") {
+        if (this.peek().value === "!") {
             operation = this.consume()
         }
-        let inner = this.parseFunctions()
+        let inner = this.parsePrimitives()
 
         if (operation) {
             inner = {
@@ -244,24 +199,6 @@ export class Parser {
                 inner: inner,
                 operation: operation
             } as UnaryExpression
-        }
-
-        return inner
-    }
-
-    parseFunctions(): Expression {
-        const functions: Token[] = []
-        while (this.typeMatches(0, TokenType.Function)) {
-            functions.push(this.consume())
-        }
-
-        let inner = this.parsePrimitives()
-        while (functions.length > 0) {
-            inner = {
-                kind: "FunctionExpression",
-                inner: inner,
-                func: functions.pop()
-            } as FunctionExpression
         }
 
         return inner
@@ -275,14 +212,39 @@ export class Parser {
                 throw new LangCompileError("Две операции не могут стоять подряд", this.peek())
         }
 
-        const currentToken = this.expect(`После '${this.lastConsumedToken?.value}' должны быть Переменная или Целое число`, TokenType.Integer, TokenType.Identifier)
+        const currentToken = this.expect(`После '${this.lastConsumedToken?.value}' должны быть Переменная, Целое число, Открывающие Квадратные или Круглые скобки`, TokenType.Integer, TokenType.Identifier, TokenType.OpenParan, TokenType.OpenBracket)
+
+        if (currentToken.type === TokenType.CloseParan && this.paranCounter === 0) {
+            throw new LangCompileError("Перед закрывающей скобкой должна идти открывающая", currentToken)
+        }
+
+        if (currentToken.type === TokenType.CloseBracket && this.bracketCounter === 0) {
+            throw new LangCompileError("Перед закрывающей скобкой должна идти открывающая", currentToken)
+        }
 
         switch (currentToken.type) {
             case TokenType.Identifier:
                 return {kind: "Identifier", symbol: currentToken} as Identifier
             case TokenType.Integer:
                 return {kind: "IntegerLiteral", value: +currentToken.value} as IntegerLiteral
+            case TokenType.OpenParan: {
+                this.paranCounter++
+                const value = this.parseAddition()
+                this.expect("Пропущена закрывающая скобка", TokenType.CloseParan)
+                this.paranCounter--
+                return value
+            }
+            case TokenType.OpenBracket: {
+                this.bracketCounter++
+                if (this.bracketCounter > 2) {
+                    throw new LangCompileError("Превышено количество вложенности квадратных скобок", currentToken)
+                }
+                const value = this.parseAddition()
+                this.expect("Пропущена закрывающая скобка", TokenType.CloseBracket)
+                this.bracketCounter--
+                return value
+            }
         }
-        throw new LangCompileError("В выражении должны быть только Переменная или Целое число", currentToken)
+        throw new LangCompileError("В выражении должны быть только Переменная, Целое число, Квадратные или Круглые скобки", currentToken)
     }
 }

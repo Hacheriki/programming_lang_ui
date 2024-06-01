@@ -16,14 +16,7 @@ export class LanguageSpecifics {
     static KEYWORDS: Record<string, TokenType> = {
         "Программа": TokenType.Start,
         "Конец": TokenType.End,
-        "Выполнить": TokenType.Execute,
-        "Сохранить": TokenType.Save,
-        "Первое": TokenType.First,
-        "Второе": TokenType.Second,
-        "Синус": TokenType.Function,
-        "Косинус": TokenType.Function,
-        "Тангенс": TokenType.Function,
-        "Котангенс": TokenType.Function,
+        "Ввод": TokenType.Enter,
         "&&": TokenType.LogicOperators,
         "||": TokenType.LogicOperators
     }
@@ -67,16 +60,25 @@ export class LanguageSpecifics {
     }
 
     static isIdentifier(str: string): boolean {
-        if (str.length <= 1)
+        if (str.length != 4)
             return false
 
-        if (!this.isAlphabetic(str[0] || ""))
+        if (!this.isAlphabetic(str[0])) {
             return false
-
-        for (const char of str) {
-            if (!this.isAlphanumeric(char))
-                return false
         }
+
+        if (!this.isNumeric(str[1])) {
+            return false
+        }
+
+        if (!this.isNumeric(str[2])) {
+            return false
+        }
+
+        if (!this.isNumeric(str[3])) {
+            return false
+        }
+
         return true
     }
 }

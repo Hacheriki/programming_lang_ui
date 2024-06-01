@@ -23,8 +23,7 @@ export function tokenize(sourceCode: SourceCode): Token[] {
                 to: sourceCode.currentSymbol
             })
             startOfStatement = sourceCode.currentSymbol // TO FORCE NEWLINES
-        }
-        else if (sourceCode.peek() === "=") {
+        } else if (sourceCode.peek() === "=") {
             tokens.push({
                 type: TokenType.Equals,
                 value: sourceCode.consume(),
@@ -40,9 +39,41 @@ export function tokenize(sourceCode: SourceCode): Token[] {
                 from: sourceCode.currentSymbol,
                 to: sourceCode.currentSymbol
             })
-        } else if (sourceCode.peek() === ".") {
+        } else if (sourceCode.peek() === ";") {
             tokens.push({
-                type: TokenType.Dot,
+                type: TokenType.Semicolon,
+                value: sourceCode.consume(),
+                isSpaceBefore,
+                from: sourceCode.currentSymbol,
+                to: sourceCode.currentSymbol
+            })
+        } else if (sourceCode.peek() === "[") {
+            tokens.push({
+                type: TokenType.OpenBracket,
+                value: sourceCode.consume(),
+                isSpaceBefore,
+                from: sourceCode.currentSymbol,
+                to: sourceCode.currentSymbol
+            })
+        } else if (sourceCode.peek() === "]") {
+            tokens.push({
+                type: TokenType.CloseBracket,
+                value: sourceCode.consume(),
+                isSpaceBefore,
+                from: sourceCode.currentSymbol,
+                to: sourceCode.currentSymbol
+            })
+        } else if (sourceCode.peek() === "(") {
+            tokens.push({
+                type: TokenType.OpenParan,
+                value: sourceCode.consume(),
+                isSpaceBefore,
+                from: sourceCode.currentSymbol,
+                to: sourceCode.currentSymbol
+            })
+        } else if (sourceCode.peek() === ")") {
+            tokens.push({
+                type: TokenType.CloseParan,
                 value: sourceCode.consume(),
                 isSpaceBefore,
                 from: sourceCode.currentSymbol,
@@ -100,7 +131,13 @@ export function tokenize(sourceCode: SourceCode): Token[] {
                 // if (value[0] === "0" && value.length > 1)
                 //     throw Error("Число не может иметь ведущих нулей")
 
-                tokens.push({type: TokenType.Integer, value, isSpaceBefore, from: sourceCode.currentSymbol - value.length + 1, to: sourceCode.currentSymbol})
+                tokens.push({
+                    type: TokenType.Integer,
+                    value,
+                    isSpaceBefore,
+                    from: sourceCode.currentSymbol - value.length + 1,
+                    to: sourceCode.currentSymbol
+                })
             } else if (sourceCode.isNextAlphanumeric()) {
                 let value = ""
                 while (sourceCode.isNextAlphanumeric()) {
@@ -109,9 +146,21 @@ export function tokenize(sourceCode: SourceCode): Token[] {
 
                 const reserved = LanguageSpecifics.reservedKeyword(value)
                 if (reserved) {
-                    tokens.push({type: reserved, value, isSpaceBefore, from: sourceCode.currentSymbol - value.length + 1, to: sourceCode.currentSymbol})
+                    tokens.push({
+                        type: reserved,
+                        value,
+                        isSpaceBefore,
+                        from: sourceCode.currentSymbol - value.length + 1,
+                        to: sourceCode.currentSymbol
+                    })
                 } else if (LanguageSpecifics.isIdentifier(value)) {
-                    tokens.push({type: TokenType.Identifier, value, isSpaceBefore, from: sourceCode.currentSymbol - value.length + 1, to: sourceCode.currentSymbol})
+                    tokens.push({
+                        type: TokenType.Identifier,
+                        value,
+                        isSpaceBefore,
+                        from: sourceCode.currentSymbol - value.length + 1,
+                        to: sourceCode.currentSymbol
+                    })
                 } else {
                     throw new LangSyntaxError(`Неизвестная последовательность символов '${value}'`, sourceCode.currentSymbol - value.length + 1, sourceCode.currentSymbol) // TODO: REDO
                 }

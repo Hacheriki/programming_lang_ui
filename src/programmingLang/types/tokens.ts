@@ -9,19 +9,19 @@ export interface Token {
 export enum TokenType {
     //// SINGLE CHAR TOKENS
     Colon,
+    Semicolon,
     Equals,
     AdditiveOperators, // [+,-]
     MultiplicativeOperators, // [*,/]
-    Dot,
+    OpenParan,
+    CloseParan,
+    OpenBracket,
+    CloseBracket,
     //// MULTICHAR TOKENS
     // RESERVED
     Start,
     End,
-    Execute,
-    Save,
-    First,
-    Second,
-    Function,
+    Enter,
     LogicOperators, // WHAT IS LOGIC? [&&, ||, И, ИЛИ] SOLVE FOR EQUALS
     // FREE
     Identifier,

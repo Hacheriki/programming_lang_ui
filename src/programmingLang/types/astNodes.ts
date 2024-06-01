@@ -5,12 +5,12 @@ export type NodeType =
     | "BinaryExpression"
     | "Identifier"
     | "IntegerLiteral"
-    | "FloatLiteral"
-    | "Sets"
-    | "SetSingle"
     | "Operation"
-    | "FunctionExpression"
     | "UnaryExpression"
+    | "Chains"
+    | "ChainSingle"
+    | "Mark"
+    | "Word"
 
 export interface Statement {
     kind: NodeType
@@ -19,6 +19,22 @@ export interface Statement {
 export interface Program extends Statement {
     kind: "Program"
     body: Statement[]
+}
+
+export interface Chains extends Statement {
+    kind: "Chains"
+    body: ChainSingle[]
+}
+
+export interface ChainSingle extends Statement {
+    kind: "ChainSingle"
+    body: Word[]
+}
+
+export interface Word extends Statement {
+    kind: "Word",
+    identifier: Token,
+    rhs: Expression
 }
 
 export interface Expression extends Statement {
@@ -39,35 +55,6 @@ export interface Identifier extends Expression {
 export interface IntegerLiteral extends Expression {
     kind: "IntegerLiteral"
     value: number
-}
-
-export interface FloatLiteral extends Expression {
-    kind: "FloatLiteral"
-    value: number
-}
-
-export interface Sets extends Statement {
-    kind: "Sets"
-    body: SetSingle[]
-}
-
-export interface SetSingle extends Statement {
-    kind: "SetSingle"
-    action: Token
-    body: FloatLiteral[]
-    additional: Token
-}
-
-export interface Operation extends Statement {
-    kind: "Operation",
-    identifier: Token,
-    rhs: Expression
-}
-
-export interface FunctionExpression extends Expression {
-    kind: "FunctionExpression",
-    func: Token,
-    inner: Expression
 }
 
 export interface UnaryExpression extends Expression {
